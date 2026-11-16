@@ -1,8 +1,6 @@
 package com.redmagic.gamespace.viewmodel
 
 import android.app.Application
-import android.content.IntentFilter
-import android.os.BatteryManager
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.redmagic.gamespace.data.database.AppDatabase
@@ -16,7 +14,7 @@ import com.redmagic.gamespace.data.model.RgbMode
 import com.redmagic.gamespace.data.repository.GameRepository
 import com.redmagic.gamespace.data.repository.SettingsRepository
 import com.redmagic.gamespace.service.PerformanceMonitorService
-import com.redmagic.gamespace.util.PerformanceSimulator
+import com.redmagic.gamespace.util.RealMetricsProvider
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -55,44 +53,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var metricsJob: Job? = null
 
     init {
-        startMetricsSimulation()
+        startMetricsCollection()
         loadInstalledGames()
         try {
             PerformanceMonitorService.start(application)
-        } catch (_: Exception) {
-        }
+        } catch (_: Exception) { }
     }
 
-    private fun startMetricsSimulation() {
+    private fun startMetricsCollection() {
         metricsJob?.cancel()
         metricsJob = viewModelScope.launch {
             while (isActive) {
                 val s = settings.value
-                val battery = readBattery()
-                _metrics.value = PerformanceSimulator.nextMetrics(
-                    mode = s.performanceMode,
-                    fanSpeed = s.fanSpeed,
-                    iceCooling = s.iceCoolingEnabled,
-                    batteryLevel = battery.first,
-                    isCharging = battery.second
-                )
-                delay(1500)
+                _metrics.value = RealMetricsProvider.read(getApplication(), s.performanceMode)
+                delay(2000)
             }
         }
-    }
-
-    private fun readBattery(): Pair<Int, Boolean> {
-        val intent = getApplication<Application>().registerReceiver(
-            null,
-            IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED)
-        )
-        val level = intent?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: 100
-        val scale = intent?.getIntExtra(BatteryManager.EXTRA_SCALE, 100) ?: 100
-        val status = intent?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
-        val isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
-                status == BatteryManager.BATTERY_STATUS_FULL
-        val pct = if (scale > 0) (level * 100 / scale) else 100
-        return pct to isCharging
     }
 
     fun loadInstalledGames() {
@@ -127,11 +103,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun setBatteryProtection(enabled: Boolean, limit: Int = 80) {
+    fun setBatteryProtection(enabled: Boolean) {
         viewModelScope.launch {
-            settingsRepo.updateSettings {
-                it.copy(batteryProtectionEnabled = enabled, batteryProtectionLimit = limit)
-            }
+            settingsRepo.updateSettings { it.copy(batteryProtectionEnabled = enabled) }
+        }
+    }
+
+    fun setBatteryProtectionLimit(limit: Int) {
+        viewModelScope.launch {
+            settingsRepo.updateSettings { it.copy(batteryProtectionLimit = limit.coerceIn(50, 100)) }
         }
     }
 
@@ -149,59 +129,61 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setRgbBrightness(brightness: Float) {
         viewModelScope.launch {
-            settingsRepo.updateSettings { it.copy(rgbBrightness = brightness) }
+            settingsRepo.updateSettings { it.copy(rgbBrightness = brightness.coerceIn(0.1f, 1f)) }
         }
     }
 
-    fun setOverlayOptions(fps: Boolean, latency: Boolean, cpu: Boolean) {
+    fun setShowFpsOverlay(enabled: Boolean) {
         viewModelScope.launch {
-            settingsRepo.updateSettings {
-                it.copy(showFpsOverlay = fps, showNetworkLatency = latency, showCpuOverlay = cpu)
-            }
+            settingsRepo.updateSettings { it.copy(showFpsOverlay = enabled) }
         }
     }
 
-    fun setWellbeing(enabled: Boolean, limitMinutes: Int = 120) {
+    fun setShowNetworkLatency(enabled: Boolean) {
         viewModelScope.launch {
-            settingsRepo.updateSettings {
-                it.copy(digitalWellbeingEnabled = enabled, wellbeingLimitMinutes = limitMinutes)
-            }
+            settingsRepo.updateSettings { it.copy(showNetworkLatency = enabled) }
         }
     }
 
-    fun setTheme(themeName: String) {
+    fun setDigitalWellbeing(enabled: Boolean) {
         viewModelScope.launch {
-            settingsRepo.updateSettings { it.copy(selectedTheme = themeName) }
+            settingsRepo.updateSettings { it.copy(digitalWellbeingEnabled = enabled) }
+        }
+    }
+
+    fun setWellbeingLimit(minutes: Int) {
+        viewModelScope.launch {
+            settingsRepo.updateSettings { it.copy(wellbeingLimitMinutes = minutes.coerceIn(30, 480)) }
         }
     }
 
     fun saveGameProfile(profile: GameProfile) {
-        viewModelScope.launch { gameRepo.saveProfile(profile) }
-    }
-
-    fun deleteGameProfile(profile: GameProfile) {
-        viewModelScope.launch { gameRepo.deleteProfile(profile) }
-    }
-
-    fun createProfileForGame(game: InstalledGame) {
         viewModelScope.launch {
-            val profile = GameProfile(
-                packageName = game.packageName,
-                appName = game.appName,
-                performanceMode = settings.value.performanceMode.name,
-                fanSpeed = settings.value.fanSpeed.name,
-                chargeBypass = settings.value.chargeBypassEnabled,
-                fpsCounter = settings.value.showFpsOverlay,
-                networkLatency = settings.value.showNetworkLatency,
-                rgbMode = settings.value.rgbMode.name,
-                rgbColor = settings.value.rgbColor
-            )
             gameRepo.saveProfile(profile)
         }
     }
 
-    override fun onCleared() {
-        metricsJob?.cancel()
-        super.onCleared()
+    fun createProfileForGame(game: InstalledGame) {
+        viewModelScope.launch {
+            val existing = profiles.value.find { it.packageName == game.packageName }
+            if (existing == null) {
+                gameRepo.saveProfile(
+                    GameProfile(
+                        packageName = game.packageName,
+                        appName = game.appName,
+                        performanceMode = settings.value.performanceMode.name,
+                        fanSpeed = settings.value.fanSpeed.name,
+                        rgbMode = settings.value.rgbMode.name,
+                        rgbColor = settings.value.rgbColor
+                    )
+                )
+            }
+        }
+    }
+
+    fun deleteProfile(profile: GameProfile) {
+        viewModelScope.launch {
+            gameRepo.deleteProfile(profile)
+        }
     }
 }
