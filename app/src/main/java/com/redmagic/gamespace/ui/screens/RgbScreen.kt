@@ -59,18 +59,29 @@ fun RgbScreen(viewModel: MainViewModel) {
         Text("Light up your game space", style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
 
         Spacer(Modifier.height(24.dp))
-        Box(
-            modifier = Modifier.fillMaxWidth().height(120.dp).clip(RoundedCornerShape(20.dp))
-                .background(
-                    if (settings.rgbMode == RgbMode.OFF) Color(0xFF1A1A1A)
-                    else Brush.horizontalGradient(
-                        listOf(
-                            currentColor.copy(alpha = settings.rgbBrightness * 0.3f),
-                            currentColor.copy(alpha = settings.rgbBrightness),
-                            currentColor.copy(alpha = settings.rgbBrightness * 0.3f)
+
+        val previewModifier = Modifier
+            .fillMaxWidth()
+            .height(120.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .then(
+                if (settings.rgbMode == RgbMode.OFF) {
+                    Modifier.background(Color(0xFF1A1A1A))
+                } else {
+                    Modifier.background(
+                        Brush.horizontalGradient(
+                            listOf(
+                                currentColor.copy(alpha = settings.rgbBrightness * 0.3f),
+                                currentColor.copy(alpha = settings.rgbBrightness),
+                                currentColor.copy(alpha = settings.rgbBrightness * 0.3f)
+                            )
                         )
                     )
-                ),
+                }
+            )
+
+        Box(
+            modifier = previewModifier,
             contentAlignment = Alignment.Center
         ) {
             Box(
