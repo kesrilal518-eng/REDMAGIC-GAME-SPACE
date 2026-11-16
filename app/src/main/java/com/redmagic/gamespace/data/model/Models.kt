@@ -80,25 +80,30 @@ data class AppSettings(
     val selectedTheme: String = "REDMAGIC Classic"
 )
 
+/**
+ * Real-time metrics. Only battery level, charging state and battery temperature
+ * are guaranteed real on non-REDMAGIC hardware (e.g. Redmi Note 11T 5G).
+ * CPU / GPU / FPS / fan RPM are null → UI shows "N/A" or "Unavailable".
+ */
 data class PerformanceMetrics(
-    val cpuUsage: Float = 0f,
-    val gpuUsage: Float = 0f,
-    val ramUsageMb: Int = 0,
-    val ramTotalMb: Int = 0,
-    val temperatureCelsius: Float = 0f,
-    val fps: Int = 0,
     val batteryLevel: Int = 100,
     val isCharging: Boolean = false,
-    val chargingTemp: Float = 0f,
-    val fanRpm: Int = 0,
-    val networkLatencyMs: Int = 0,
-    val performanceMode: PerformanceMode = PerformanceMode.BALANCE
+    val batteryTempCelsius: Float? = null,
+    val cpuUsage: Float? = null,
+    val gpuUsage: Float? = null,
+    val ramUsageMb: Int? = null,
+    val ramTotalMb: Int? = null,
+    val deviceTempCelsius: Float? = null,
+    val fps: Int? = null,
+    val fanRpm: Int? = null,
+    val networkLatencyMs: Int? = null,
+    val performanceMode: PerformanceMode = PerformanceMode.BALANCE,
+    val hardwareFanAvailable: Boolean = false,
+    val hardwareRgbAvailable: Boolean = false
 )
 
 data class InstalledGame(
     val packageName: String,
     val appName: String,
-    val icon: Any? = null,
-    val isGame: Boolean = true,
-    val hasProfile: Boolean = false
+    val isGame: Boolean = true
 )

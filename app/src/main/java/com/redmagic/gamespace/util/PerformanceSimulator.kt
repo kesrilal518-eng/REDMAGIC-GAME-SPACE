@@ -1,81 +1,59 @@
 package com.redmagic.gamespace.util
 
-import com.redmagic.gamespace.data.model.FanSpeed
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.BatteryManager
 import com.redmagic.gamespace.data.model.PerformanceMetrics
 import com.redmagic.gamespace.data.model.PerformanceMode
-import kotlin.math.max
-import kotlin.random.Random
 
-object PerformanceSimulator {
+/**
+ * Provides real metrics only. On Redmi Note 11T 5G (and most non-REDMAGIC devices):
+ * - Battery level + charging status: real
+ * - Battery temperature: real (from BatteryManager)
+ * - CPU / GPU / FPS / internal fan: unavailable → null
+ *
+ * No simulated / fake performance numbers are returned.
+ */
+object RealMetricsProvider {
 
-    private var currentCpu = 35f
-    private var currentGpu = 25f
-    private var currentTemp = 38f
-    private var currentFps = 60
-    private var currentLatency = 28
+    fun read(context: Context, mode: PerformanceMode): PerformanceMetrics {
+        val intent = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        val level = intent?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
+        val scale = intent?.getIntExtra(BatteryManager.EXTRA_SCALE, 100) ?: 100
+        val status = intent?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
+        val tempTenths = intent?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, Int.MIN_VALUE) ?: Int.MIN_VALUE
 
-    fun nextMetrics(
-        mode: PerformanceMode,
-        fanSpeed: FanSpeed,
-        iceCooling: Boolean,
-        batteryLevel: Int,
-        isCharging: Boolean
-    ): PerformanceMetrics {
-        val loadFactor = when (mode) {
-            PerformanceMode.ECO -> 0.55f
-            PerformanceMode.BALANCE -> 0.75f
-            PerformanceMode.PERFORMANCE -> 0.92f
-            PerformanceMode.BEAST -> 1.0f
-        }
+        val pct = if (level >= 0 && scale > 0) (level * 100 / scale) else 100
+        val isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
+                status == BatteryManager.BATTERY_STATUS_FULL
+        val batteryTemp = if (tempTenths != Int.MIN_VALUE) tempTenths / 10f else null
 
-        val coolingFactor = when {
-            !iceCooling || fanSpeed == FanSpeed.OFF -> 1.15f
-            fanSpeed == FanSpeed.LOW -> 1.05f
-            fanSpeed == FanSpeed.MEDIUM -> 0.95f
-            fanSpeed == FanSpeed.HIGH -> 0.85f
-            fanSpeed == FanSpeed.TURBO -> 0.75f
-            else -> 1.0f
-        }
-
-        currentCpu = smooth(currentCpu, 20f + loadFactor * 70f + Random.nextFloat() * 12f - 6f)
-        currentGpu = smooth(currentGpu, 15f + loadFactor * 75f + Random.nextFloat() * 15f - 7f)
-        currentTemp = smooth(
-            currentTemp,
-            (36f + loadFactor * 18f * coolingFactor) + Random.nextFloat() * 3f - 1.5f
-        )
-        currentFps = when (mode) {
-            PerformanceMode.ECO -> Random.nextInt(45, 61)
-            PerformanceMode.BALANCE -> Random.nextInt(55, 91)
-            PerformanceMode.PERFORMANCE -> Random.nextInt(85, 121)
-            PerformanceMode.BEAST -> Random.nextInt(110, 145)
-        }
-        currentLatency = max(12, (35 * (1.2f - loadFactor * 0.3f) + Random.nextInt(-8, 12)).toInt())
-
-        val ramUsed = (2800 + loadFactor * 2200 + Random.nextInt(-150, 200)).toInt()
-        val chargingTemp = if (isCharging) {
-            currentTemp + 2f + Random.nextFloat() * 4f
-        } else {
-            currentTemp - 1f
+        val am = context.getSystemService(Context.ACTIVITY_SERVICE) as? android.app.ActivityManager
+        var ramUsed: Int? = null
+        var ramTotal: Int? = null
+        if (am != null) {
+            val mi = android.app.ActivityManager.MemoryInfo()
+            am.getMemoryInfo(mi)
+            ramTotal = (mi.totalMem / (1024 * 1024)).toInt()
+            ramUsed = ((mi.totalMem - mi.availMem) / (1024 * 1024)).toInt()
         }
 
         return PerformanceMetrics(
-            cpuUsage = currentCpu.coerceIn(5f, 99f),
-            gpuUsage = currentGpu.coerceIn(3f, 99f),
-            ramUsageMb = ramUsed.coerceIn(1800, 5500),
-            ramTotalMb = 6144,
-            temperatureCelsius = currentTemp.coerceIn(32f, 55f),
-            fps = currentFps,
-            batteryLevel = batteryLevel,
+            batteryLevel = pct,
             isCharging = isCharging,
-            chargingTemp = chargingTemp.coerceIn(30f, 48f),
-            fanRpm = fanSpeed.rpm + Random.nextInt(-80, 120).coerceAtLeast(0),
-            networkLatencyMs = currentLatency,
-            performanceMode = mode
+            batteryTempCelsius = batteryTemp,
+            cpuUsage = null,
+            gpuUsage = null,
+            ramUsageMb = ramUsed,
+            ramTotalMb = ramTotal,
+            deviceTempCelsius = batteryTemp,
+            fps = null,
+            fanRpm = null,
+            networkLatencyMs = null,
+            performanceMode = mode,
+            hardwareFanAvailable = false,
+            hardwareRgbAvailable = false
         )
-    }
-
-    private fun smooth(current: Float, target: Float): Float {
-        val delta = (target - current) * 0.25f
-        return current + delta
     }
 }
