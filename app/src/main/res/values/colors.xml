@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="redmagic_red">#E60012</color>
+    <color name="redmagic_dark">#0A0A0A</color>
+    <color name="redmagic_card">#1A1A1A</color>
+    <color name="redmagic_accent">#FF2D55</color>
+    <color name="redmagic_cyan">#00F0FF</color>
+    <color name="redmagic_purple">#9B59FF</color>
+    <color name="redmagic_green">#00FF9D</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="ic_launcher_background">#0A0A0A</color>
+</resources>
