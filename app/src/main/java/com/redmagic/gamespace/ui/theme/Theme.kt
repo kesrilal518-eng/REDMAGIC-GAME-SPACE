@@ -1,7 +1,6 @@
 package com.redmagic.gamespace.ui.theme
 
 import android.app.Activity
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
@@ -14,39 +13,33 @@ import androidx.core.view.WindowCompat
 private val RedMagicDarkColorScheme = darkColorScheme(
     primary = RedMagicRed,
     onPrimary = Color.White,
-    primaryContainer = RedMagicAccent,
+    primaryContainer = RedMagicRedDark,
     onPrimaryContainer = Color.White,
     secondary = RedMagicCyan,
     onSecondary = Color.Black,
-    secondaryContainer = Color(0xFF003D40),
-    onSecondaryContainer = RedMagicCyan,
     tertiary = RedMagicPurple,
-    onTertiary = Color.White,
-    background = RedMagicDark,
+    background = RedMagicBlack,
     onBackground = TextPrimary,
-    surface = RedMagicCard,
+    surface = RedMagicSurface,
     onSurface = TextPrimary,
-    surfaceVariant = RedMagicCardElevated,
+    surfaceVariant = RedMagicCard,
     onSurfaceVariant = TextSecondary,
-    error = ErrorRed,
-    onError = Color.White,
-    outline = Color(0xFF3A3A3A),
-    outlineVariant = Color(0xFF2A2A2A)
+    outline = Color(0xFF333333),
+    error = ErrorRed
 )
 
 @Composable
 fun REDMAGICGameSpaceTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val colorScheme = RedMagicDarkColorScheme
-
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = Color.Transparent.toArgb()
-            window.navigationBarColor = RedMagicDark.toArgb()
+            window.statusBarColor = RedMagicBlack.toArgb()
+            window.navigationBarColor = RedMagicBlack.toArgb()
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
             WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = false
         }
