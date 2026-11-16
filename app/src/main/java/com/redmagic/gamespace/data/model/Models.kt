@@ -105,5 +105,6 @@ data class PerformanceMetrics(
 data class InstalledGame(
     val packageName: String,
     val appName: String,
-    val isGame: Boolean = true
+    val isGame: Boolean = true,
+    val hasProfile: Boolean = false
 )
