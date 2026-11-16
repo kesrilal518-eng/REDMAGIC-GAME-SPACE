@@ -2,6 +2,7 @@ package com.redmagic.gamespace.ui.components
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -29,133 +31,136 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.redmagic.gamespace.ui.theme.GaugeTrack
 import com.redmagic.gamespace.ui.theme.RedMagicCard
 import com.redmagic.gamespace.ui.theme.RedMagicCardElevated
 import com.redmagic.gamespace.ui.theme.RedMagicCyan
 import com.redmagic.gamespace.ui.theme.RedMagicRed
+import com.redmagic.gamespace.ui.theme.RedMagicRedGlow
 import com.redmagic.gamespace.ui.theme.TextMuted
 import com.redmagic.gamespace.ui.theme.TextPrimary
 import com.redmagic.gamespace.ui.theme.TextSecondary
 
 @Composable
-fun SectionTitle(title: String, modifier: Modifier = Modifier) {
+fun SectionHeader(title: String, modifier: Modifier = Modifier) {
     Text(
         text = title.uppercase(),
         style = MaterialTheme.typography.labelMedium,
         color = RedMagicRed,
-        letterSpacing = 1.5.sp,
-        modifier = modifier.padding(horizontal = 4.dp, vertical = 8.dp)
+        letterSpacing = 2.sp,
+        fontWeight = FontWeight.Bold,
+        modifier = modifier.padding(vertical = 8.dp)
     )
 }
 
 @Composable
-fun MetricCard(
-    title: String,
-    value: String,
-    subtitle: String? = null,
-    icon: ImageVector? = null,
-    accentColor: Color = RedMagicCyan,
+fun CircularGauge(
+    progress: Float?,
+    valueText: String,
+    label: String,
+    size: Dp = 110.dp,
+    stroke: Dp = 10.dp,
+    accent: Color = RedMagicRed,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = RedMagicCard),
-        shape = RoundedCornerShape(16.dp)
+    val target = (progress ?: 0f).coerceIn(0f, 1f)
+    val animated by animateFloatAsState(target, tween(700), label = "gauge")
+    val isAvailable = progress != null
+
+    Box(
+        modifier = modifier.size(size),
+        contentAlignment = Alignment.Center
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                if (icon != null) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = accentColor,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                }
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = TextSecondary
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val strokePx = stroke.toPx()
+            val radius = (this.size.minDimension - strokePx) / 2f
+            val topLeft = Offset(
+                (this.size.width - radius * 2) / 2f,
+                (this.size.height - radius * 2) / 2f
+            )
+            val arcSize = Size(radius * 2, radius * 2)
+            drawArc(
+                color = GaugeTrack,
+                startAngle = 135f,
+                sweepAngle = 270f,
+                useCenter = false,
+                topLeft = topLeft,
+                size = arcSize,
+                style = Stroke(width = strokePx, cap = StrokeCap.Round)
+            )
+            if (isAvailable) {
+                drawArc(
+                    brush = Brush.sweepGradient(listOf(accent.copy(0.5f), accent, RedMagicRedGlow)),
+                    startAngle = 135f,
+                    sweepAngle = 270f * animated,
+                    useCenter = false,
+                    topLeft = topLeft,
+                    size = arcSize,
+                    style = Stroke(width = strokePx, cap = StrokeCap.Round)
                 )
             }
-            Spacer(modifier = Modifier.height(8.dp))
+        }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = value,
-                style = MaterialTheme.typography.headlineMedium,
-                color = TextPrimary,
+                text = valueText,
+                style = MaterialTheme.typography.titleLarge,
+                color = if (isAvailable) TextPrimary else TextMuted,
                 fontWeight = FontWeight.Bold
             )
-            if (subtitle != null) {
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextMuted
-                )
-            }
+            Text(label, style = MaterialTheme.typography.labelSmall, color = TextSecondary)
         }
     }
 }
 
 @Composable
-fun ProgressMetric(
+fun EnergyModeChip(
     label: String,
-    value: Float,
-    max: Float = 100f,
-    color: Color = RedMagicCyan,
-    valueText: String? = null
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    val animated by animateFloatAsState(
-        targetValue = (value / max).coerceIn(0f, 1f),
-        animationSpec = tween(600),
-        label = "progress"
-    )
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(label, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
-            Text(
-                valueText ?: "${value.toInt()}%",
-                style = MaterialTheme.typography.bodySmall,
-                color = TextPrimary,
-                fontWeight = FontWeight.Medium
+    val bg = if (selected) {
+        Brush.horizontalGradient(listOf(RedMagicRed, RedMagicRedGlow))
+    } else {
+        Brush.horizontalGradient(listOf(RedMagicCardElevated, RedMagicCardElevated))
+    }
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(bg)
+            .then(
+                if (selected) Modifier.border(1.dp, RedMagicRedGlow, RoundedCornerShape(12.dp))
+                else Modifier.border(1.dp, Color(0xFF333333), RoundedCornerShape(12.dp))
             )
-        }
-        Spacer(modifier = Modifier.height(6.dp))
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(6.dp)
-                .clip(RoundedCornerShape(3.dp))
-                .background(Color(0xFF2A2A2A))
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(animated)
-                    .height(6.dp)
-                    .clip(RoundedCornerShape(3.dp))
-                    .background(
-                        Brush.horizontalGradient(listOf(color.copy(alpha = 0.7f), color))
-                    )
-            )
-        }
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge,
+            color = if (selected) Color.White else TextSecondary,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+            textAlign = TextAlign.Center
+        )
     }
 }
 
 @Composable
-fun SettingSwitchRow(
+fun SettingRow(
     title: String,
     subtitle: String? = null,
     checked: Boolean,
@@ -165,15 +170,16 @@ fun SettingSwitchRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(14.dp))
             .background(RedMagicCard)
+            .border(1.dp, Color(0xFF2A2A2A), RoundedCornerShape(14.dp))
             .clickable { onCheckedChange(!checked) }
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (icon != null) {
             Icon(icon, null, tint = RedMagicRed, modifier = Modifier.size(22.dp))
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(Modifier.width(14.dp))
         }
         Column(modifier = Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.titleMedium, color = TextPrimary)
@@ -195,29 +201,20 @@ fun SettingSwitchRow(
 }
 
 @Composable
-fun ModeChip(
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
+fun PremiumCard(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
 ) {
-    val bg = if (selected) RedMagicRed else RedMagicCardElevated
-    val borderColor = if (selected) RedMagicRed else Color(0xFF333333)
-    Box(
+    Card(
         modifier = modifier
-            .clip(RoundedCornerShape(20.dp))
-            .background(bg)
-            .border(1.dp, borderColor, RoundedCornerShape(20.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        contentAlignment = Alignment.Center
+            .fillMaxWidth()
+            .border(1.dp, Color(0xFF2A2A2A), RoundedCornerShape(18.dp)),
+        colors = CardDefaults.cardColors(containerColor = RedMagicCard),
+        shape = RoundedCornerShape(18.dp)
     ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelLarge,
-            color = if (selected) Color.White else TextSecondary,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
-        )
+        Box(modifier = Modifier.padding(16.dp)) {
+            content()
+        }
     }
 }
 
@@ -235,4 +232,30 @@ fun ColorSwatch(color: Color, selected: Boolean, onClick: () -> Unit) {
             )
             .clickable(onClick = onClick)
     )
+}
+
+@Composable
+fun ModeChip(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    EnergyModeChip(label = label, selected = selected, onClick = onClick, modifier = modifier)
+}
+
+@Composable
+fun SectionTitle(title: String, modifier: Modifier = Modifier) {
+    SectionHeader(title = title, modifier = modifier)
+}
+
+@Composable
+fun SettingSwitchRow(
+    title: String,
+    subtitle: String? = null,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    icon: ImageVector? = null
+) {
+    SettingRow(title, subtitle, checked, onCheckedChange, icon)
 }
