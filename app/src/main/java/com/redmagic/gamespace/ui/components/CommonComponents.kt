@@ -68,18 +68,40 @@ fun MetricCard(
         colors = CardDefaults.cardColors(containerColor = RedMagicCard),
         shape = RoundedCornerShape(16.dp)
     ) {
-        Column(Modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (icon != null) {
-                    Icon(icon, null, tint = accentColor, modifier = Modifier.size(16.dp))
-                    Spacer(Modifier.width(8.dp))
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = accentColor,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
                 }
-                Text(title, style = MaterialTheme.typography.labelMedium, color = TextSecondary)
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = TextSecondary
+                )
             }
-            Spacer(Modifier.height(8.dp))
-            Text(value, style = MaterialTheme.typography.headlineMedium, color = TextPrimary, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = value,
+                style = MaterialTheme.typography.headlineMedium,
+                color = TextPrimary,
+                fontWeight = FontWeight.Bold
+            )
             if (subtitle != null) {
-                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = TextMuted)
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextMuted
+                )
             }
         }
     }
@@ -99,17 +121,34 @@ fun ProgressMetric(
         label = "progress"
     )
     Column(modifier = Modifier.fillMaxWidth()) {
-        Row(Modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
             Text(label, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
-            Text(valueText ?: "${value.toInt()}%", style = MaterialTheme.typography.bodySmall, color = TextPrimary, fontWeight = FontWeight.Medium)
+            Text(
+                valueText ?: "${value.toInt()}%",
+                style = MaterialTheme.typography.bodySmall,
+                color = TextPrimary,
+                fontWeight = FontWeight.Medium
+            )
         }
-        Spacer(Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(6.dp))
         Box(
-            modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)).background(Color(0xFF2A2A2A))
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(6.dp)
+                .clip(RoundedCornerShape(3.dp))
+                .background(Color(0xFF2A2A2A))
         ) {
             Box(
-                modifier = Modifier.fillMaxWidth(animated).height(6.dp).clip(RoundedCornerShape(3.dp))
-                    .background(Brush.horizontalGradient(listOf(color.copy(alpha = 0.7f), color)))
+                modifier = Modifier
+                    .fillMaxWidth(animated)
+                    .height(6.dp)
+                    .clip(RoundedCornerShape(3.dp))
+                    .background(
+                        Brush.horizontalGradient(listOf(color.copy(alpha = 0.7f), color))
+                    )
             )
         }
     }
@@ -124,13 +163,17 @@ fun SettingSwitchRow(
     icon: ImageVector? = null
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(RedMagicCard)
-            .clickable { onCheckedChange(!checked) }.padding(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(RedMagicCard)
+            .clickable { onCheckedChange(!checked) }
+            .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (icon != null) {
             Icon(icon, null, tint = RedMagicRed, modifier = Modifier.size(22.dp))
-            Spacer(Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(12.dp))
         }
         Column(modifier = Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.titleMedium, color = TextPrimary)
@@ -152,12 +195,20 @@ fun SettingSwitchRow(
 }
 
 @Composable
-fun ModeChip(label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun ModeChip(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     val bg = if (selected) RedMagicRed else RedMagicCardElevated
-    val border = if (selected) RedMagicRed else Color(0xFF333333)
+    val borderColor = if (selected) RedMagicRed else Color(0xFF333333)
     Box(
-        modifier = modifier.clip(RoundedCornerShape(20.dp)).background(bg)
-            .border(1.dp, border, RoundedCornerShape(20.dp)).clickable(onClick = onClick)
+        modifier = modifier
+            .clip(RoundedCornerShape(20.dp))
+            .background(bg)
+            .border(1.dp, borderColor, RoundedCornerShape(20.dp))
+            .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 10.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -173,7 +224,10 @@ fun ModeChip(label: String, selected: Boolean, onClick: () -> Unit, modifier: Mo
 @Composable
 fun ColorSwatch(color: Color, selected: Boolean, onClick: () -> Unit) {
     Box(
-        modifier = Modifier.size(40.dp).clip(CircleShape).background(color)
+        modifier = Modifier
+            .size(40.dp)
+            .clip(CircleShape)
+            .background(color)
             .border(
                 width = if (selected) 3.dp else 1.dp,
                 color = if (selected) Color.White else Color(0xFF444444),
