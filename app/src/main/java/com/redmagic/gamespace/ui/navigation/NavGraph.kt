@@ -4,9 +4,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Games
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Thermostat
-import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.outlined.BatteryChargingFull
 import androidx.compose.material.icons.outlined.Dashboard
 import androidx.compose.material.icons.outlined.Games
@@ -32,30 +32,12 @@ sealed class Screen(
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector
 ) {
-    data object Dashboard : Screen(
-        "dashboard", "Dashboard",
-        Icons.Filled.Dashboard, Icons.Outlined.Dashboard
-    )
-    data object Games : Screen(
-        "games", "Games",
-        Icons.Filled.Games, Icons.Outlined.Games
-    )
-    data object Cooling : Screen(
-        "cooling", "Cooling",
-        Icons.Filled.Thermostat, Icons.Outlined.Thermostat
-    )
-    data object Battery : Screen(
-        "battery", "Battery",
-        Icons.Filled.BatteryChargingFull, Icons.Outlined.BatteryChargingFull
-    )
-    data object Rgb : Screen(
-        "rgb", "RGB",
-        Icons.Filled.LightMode, Icons.Outlined.LightMode
-    )
-    data object Settings : Screen(
-        "settings", "Settings",
-        Icons.Filled.Settings, Icons.Outlined.Settings
-    )
+    data object Dashboard : Screen("dashboard", "Energy", Icons.Filled.Dashboard, Icons.Outlined.Dashboard)
+    data object Games : Screen("games", "Hall", Icons.Filled.Games, Icons.Outlined.Games)
+    data object Cooling : Screen("cooling", "ICE", Icons.Filled.Thermostat, Icons.Outlined.Thermostat)
+    data object Battery : Screen("battery", "Battery", Icons.Filled.BatteryChargingFull, Icons.Outlined.BatteryChargingFull)
+    data object Rgb : Screen("rgb", "RGB", Icons.Filled.LightMode, Icons.Outlined.LightMode)
+    data object Settings : Screen("settings", "More", Icons.Filled.Settings, Icons.Outlined.Settings)
 }
 
 val bottomNavItems = listOf(
@@ -76,23 +58,11 @@ fun GameSpaceNavGraph(
         navController = navController,
         startDestination = Screen.Dashboard.route
     ) {
-        composable(Screen.Dashboard.route) {
-            DashboardScreen(viewModel = viewModel)
-        }
-        composable(Screen.Games.route) {
-            GamesScreen(viewModel = viewModel)
-        }
-        composable(Screen.Cooling.route) {
-            CoolingScreen(viewModel = viewModel)
-        }
-        composable(Screen.Battery.route) {
-            BatteryScreen(viewModel = viewModel)
-        }
-        composable(Screen.Rgb.route) {
-            RgbScreen(viewModel = viewModel)
-        }
-        composable(Screen.Settings.route) {
-            SettingsScreen(viewModel = viewModel)
-        }
+        composable(Screen.Dashboard.route) { DashboardScreen(viewModel) }
+        composable(Screen.Games.route) { GamesScreen(viewModel) }
+        composable(Screen.Cooling.route) { CoolingScreen(viewModel) }
+        composable(Screen.Battery.route) { BatteryScreen(viewModel) }
+        composable(Screen.Rgb.route) { RgbScreen(viewModel) }
+        composable(Screen.Settings.route) { SettingsScreen(viewModel) }
     }
 }
