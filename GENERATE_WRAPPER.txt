@@ -1,0 +1,9 @@
+If ./gradlew is missing after clone:
+
+  Option 1 (recommended): Open the project in Android Studio — it will generate the Gradle Wrapper automatically.
+
+  Option 2 (command line):
+    gradle wrapper --gradle-version 8.9
+
+Then:
+  ./gradlew assembleDebug
