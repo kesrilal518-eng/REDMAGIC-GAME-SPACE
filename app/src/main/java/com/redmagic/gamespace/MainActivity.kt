@@ -27,8 +27,8 @@ import androidx.navigation.compose.rememberNavController
 import com.redmagic.gamespace.ui.navigation.GameSpaceNavGraph
 import com.redmagic.gamespace.ui.navigation.bottomNavItems
 import com.redmagic.gamespace.ui.theme.REDMAGICGameSpaceTheme
+import com.redmagic.gamespace.ui.theme.RedMagicBlack
 import com.redmagic.gamespace.ui.theme.RedMagicCard
-import com.redmagic.gamespace.ui.theme.RedMagicDark
 import com.redmagic.gamespace.ui.theme.RedMagicRed
 import com.redmagic.gamespace.ui.theme.TextMuted
 import com.redmagic.gamespace.ui.theme.TextSecondary
@@ -46,7 +46,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         requestNotificationPermissionIfNeeded()
-
         setContent {
             REDMAGICGameSpaceTheme {
                 GameSpaceApp(viewModel = viewModel)
@@ -56,10 +55,8 @@ class MainActivity : ComponentActivity() {
 
     private fun requestNotificationPermissionIfNeeded() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.POST_NOTIFICATIONS
-                ) != PackageManager.PERMISSION_GRANTED
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED
             ) {
                 notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
@@ -74,7 +71,7 @@ fun GameSpaceApp(viewModel: MainViewModel) {
     val currentRoute = navBackStackEntry?.destination?.route
 
     Scaffold(
-        containerColor = RedMagicDark,
+        containerColor = RedMagicBlack,
         bottomBar = {
             NavigationBar(
                 containerColor = RedMagicCard,
@@ -87,9 +84,7 @@ fun GameSpaceApp(viewModel: MainViewModel) {
                         onClick = {
                             if (currentRoute != screen.route) {
                                 navController.navigate(screen.route) {
-                                    popUpTo(navController.graph.startDestinationId) {
-                                        saveState = true
-                                    }
+                                    popUpTo(navController.graph.startDestinationId) { saveState = true }
                                     launchSingleTop = true
                                     restoreState = true
                                 }
@@ -102,17 +97,14 @@ fun GameSpaceApp(viewModel: MainViewModel) {
                             )
                         },
                         label = {
-                            Text(
-                                text = screen.title,
-                                maxLines = 1
-                            )
+                            Text(text = screen.title, maxLines = 1)
                         },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = RedMagicRed,
                             selectedTextColor = RedMagicRed,
                             unselectedIconColor = TextMuted,
                             unselectedTextColor = TextSecondary,
-                            indicatorColor = RedMagicRed.copy(alpha = 0.15f)
+                            indicatorColor = RedMagicRed.copy(alpha = 0.18f)
                         )
                     )
                 }
@@ -120,10 +112,7 @@ fun GameSpaceApp(viewModel: MainViewModel) {
         }
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
-            GameSpaceNavGraph(
-                navController = navController,
-                viewModel = viewModel
-            )
+            GameSpaceNavGraph(navController = navController, viewModel = viewModel)
         }
     }
 }
